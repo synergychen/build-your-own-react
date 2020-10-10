@@ -1,5 +1,5 @@
 // Enable JSX by adding @babel/plugin-transform-react-jsx
-// createElement is defined as alias in webpack config, but will still throw error: createElement is not defined
+// createElement is defined as alias in webpack config
 // Transform to:
 //   var a = createElement("div", {
 //     id: "1",
@@ -11,8 +11,20 @@
 //     id: "3",
 //     "class": "child"
 //   }));
-// TODO: implement createElement(tagName, attributes, children)
+
+function createElement(tagName, attributes, ...children) {
+    let el = document.createElement(tagName)
+    for (let attrName in attributes) {
+        el.setAttribute(attrName, attributes[attrName])
+    }
+    for (let child of children) {
+        el.appendChild(child)
+    }
+    return el
+}
+
 let a = <div id="1" class="parent">
     <div id="2" class="child"/>
     <div id="3" class="child"/>
 </div>
+console.log(a)
