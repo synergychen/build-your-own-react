@@ -7,10 +7,7 @@
 //   }, createElement("div", {
 //     id: "2",
 //     "class": "child"
-//   }), createElement("div", {
-//     id: "3",
-//     "class": "child"
-//   }));
+//   }, "Hello"), createElement("span", null, "World"));
 
 function createElement(tagName, attributes, ...children) {
     let el = document.createElement(tagName)
@@ -18,13 +15,16 @@ function createElement(tagName, attributes, ...children) {
         el.setAttribute(attrName, attributes[attrName])
     }
     for (let child of children) {
+        if (typeof child === 'string') {
+            child = document.createTextNode(child)
+        }
         el.appendChild(child)
     }
     return el
 }
 
 let a = <div id="1" class="parent">
-    <div id="2" class="child"/>
-    <div id="3" class="child"/>
+    <div id="2" class="child">Hello</div>
+    <span>World</span>
 </div>
 console.log(a)
