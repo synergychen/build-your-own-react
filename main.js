@@ -10,14 +10,10 @@
 //   }, "Hello"), createElement("span", null, "World"));
 
 function createElement(type, attributes, ...children) {
-    // TODO: el created by createElement could be DOM elemenet, text node or custom element in this case, need to create generic interface for all
-    // The interface will have setAttribute, appendChild methods
     let el
     if (typeof type === "string") {
-        // TODO: use adapter pattern with a generic interface
-        el = document.createElement(type)
+        el = new ElementWrapper(type)
     } else {
-        // TODO: use adapter pattern with a generic interface
         el = new type
     }
     for (let attrName in attributes) {
@@ -25,19 +21,83 @@ function createElement(type, attributes, ...children) {
     }
     for (let child of children) {
         if (typeof child === 'string') {
-            // TODO: use adapter pattern with a generic interface
-            child = document.createTextNode(child)
+            child = new TextNodeWrapper(child)
         }
         el.appendChild(child)
     }
     return el
 }
 
-class MyComponent {
+// Element wrapper (adapter pattern)
+class ElementWrapper {
+    constructor(tagName) {
+        this.root = document.createElement(tagName)
+    }
+
+    setAttribute(name, value) {
+        this.root.setAttribute(name, value)
+    }
+
+    appendChild(component) {
+        if (typeof component === 'object' && component.constructor === Array) {
+            for(let el of component) {
+                this.root.appendChild(el.root)
+            }
+        } else {
+            this.root.appendChild(component.root)
+        }
+    }
 }
 
-let a = <MyComponent id="1" class="parent">
+// Text node wrapper
+class TextNodeWrapper {
+    constructor(text) {
+        this.root = document.createTextNode(text)
+    }
+}
+
+// Custom component
+class MyComponent {
+    constructor() {
+        // Create virtual node with attributes but without rendering
+        // Need to explicitly render
+        this.props = Object.create(null)
+        this.children = []
+        this._root = null
+    }
+
+    setAttribute(name, value) {
+        this.props[name] = value
+    }
+
+    appendChild(child) {
+        this.children.push(child)
+    }
+
+    render() {
+        return <div>
+            My component
+            {this.children}
+        </div>
+    }
+
+    // Enable access to DOM node
+    get root() {
+        if (!this._root) {
+            // render returns ElementWrapper or TextNodeWrapper or Custom Component
+            // if root returns Custom Component, it will recursively call root until returning ElementWrapper or TextNodeWrapper
+            this._root = this.render().root
+        }
+        return this._root
+    }
+}
+
+function render(component, targetEl) {
+    targetEl.appendChild(component.root)
+}
+
+// Extract interface of ElementWrapper, TextNodeWrapper and Custom Component would require us to explicitly call render function in order to append to DOM.
+render(<MyComponent id="1" class="parent">
     <div id="2" class="child">Hello</div>
     <span>World</span>
-</MyComponent>
-console.log(a)
+</MyComponent>, document.body)
