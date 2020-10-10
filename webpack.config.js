@@ -12,7 +12,12 @@ module.exports = {
                         // Transform modern javascript code
                         presets: ['@babel/preset-env'],
                         // Enabel JSX syntax
-                        plugins: ['@babel/plugin-transform-react-jsx']
+                        plugins: [
+                            [
+                                '@babel/plugin-transform-react-jsx',
+                                { pragma: 'createElement' }
+                            ]
+                        ]
                     }
                 }
             }
