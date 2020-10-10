@@ -10,7 +10,9 @@ module.exports = {
                     loader: 'babel-loader',
                     options: {
                         // Transform modern javascript code
-                        presets: ['@babel/preset-env']
+                        presets: ['@babel/preset-env'],
+                        // Enabel JSX syntax
+                        plugins: ['@babel/plugin-transform-react-jsx']
                     }
                 }
             }
