@@ -1,3 +1,5 @@
+const HtmlWebpackPlugin = require('html-webpack-plugin')
+
 module.exports = {
     entry: {
         main: './main.js'
@@ -23,6 +25,12 @@ module.exports = {
             }
         ]
     },
+    plugins: [
+        new HtmlWebpackPlugin({
+            hash: true,
+            filename: './dist/index.html'
+        })
+    ],
     mode: 'development',
     optimization: {
         minimize: false
