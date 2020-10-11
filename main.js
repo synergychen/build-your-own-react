@@ -19,12 +19,19 @@ function createElement(type, attributes, ...children) {
     for (let attrName in attributes) {
         el.setAttribute(attrName, attributes[attrName])
     }
-    for (let child of children) {
-        if (typeof child === 'string') {
-            child = new TextNodeWrapper(child)
+    let insertChildren = (children) => {
+        for (let child of children) {
+            if (typeof child === 'string') {
+                child = new TextNodeWrapper(child)
+            }
+            if (typeof child === 'object' && child instanceof Array) {
+                insertChildren(child)
+            } else {
+                el.appendChild(child)
+            }
         }
-        el.appendChild(child)
     }
+    insertChildren(children)
     return el
 }
 
@@ -39,13 +46,7 @@ class ElementWrapper {
     }
 
     appendChild(component) {
-        if (typeof component === 'object' && component.constructor === Array) {
-            for(let el of component) {
-                this.root.appendChild(el.root)
-            }
-        } else {
-            this.root.appendChild(component.root)
-        }
+        this.root.appendChild(component.root)
     }
 }
 
@@ -75,10 +76,16 @@ class MyComponent {
     }
 
     render() {
-        return <div>
-            My component
+        // Render custom DOM and its children
+        let el = <div>
+            <h1>My component</h1>
             {this.children}
         </div>
+        // Set attributes
+        for(let propName in this.props) {
+            el.setAttribute(propName, this.props[propName])
+        }
+        return el
     }
 
     // Enable access to DOM node
@@ -100,4 +107,5 @@ function render(component, targetEl) {
 render(<MyComponent id="1" class="parent">
     <div id="2" class="child">Hello</div>
     <span>World</span>
+    <MyComponent id="child"/>
 </MyComponent>, document.body)
