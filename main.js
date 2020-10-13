@@ -1,10 +1,19 @@
 import { createElement, Component, render } from './toy-react.js'
 
 class MyComponent extends Component {
+    constructor() {
+        super()
+        this.state = {
+            a: 1,
+            b: 2
+        }
+    }
+
     render() {
         // Render custom DOM and its children
         let el = <div>
             <h1>My component</h1>
+            <span>State a: { this.state.a.toString() }</span>
             {this.children}
         </div>
         // Set attributes
