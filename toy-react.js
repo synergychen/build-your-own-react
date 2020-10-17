@@ -35,7 +35,16 @@ class ElementWrapper {
     }
 
     appendChild(component) {
-        this.root.appendChild(component.root)
+        const range = new Range()
+        // Append to end
+        range.setStart(this.root, this.root.childNodes.length)
+        range.setEnd(this.root, this.root.childNodes.length)
+        component._renderToDOM(range)
+    }
+
+    _renderToDOM(range) {
+        range.deleteContents()
+        range.insertNode(this.root)
     }
 }
 
@@ -43,6 +52,11 @@ class ElementWrapper {
 class TextNodeWrapper {
     constructor(text) {
         this.root = document.createTextNode(text)
+    }
+
+    _renderToDOM(range) {
+        range.deleteContents()
+        range.insertNode(this.root)
     }
 }
 
@@ -63,6 +77,13 @@ export class Component {
         this.children.push(child)
     }
 
+    // Switch from render one element to render a range of elements, prepare to re-render and re-paint in next step
+    // Range API is best fit for range update
+    _renderToDOM(range) {
+        // render function returns component vnode
+        this.render()._renderToDOM(range)
+    }
+
     // Enable access to DOM node
     get root() {
         if (!this._root) {
@@ -75,5 +96,9 @@ export class Component {
 }
 
 export function render(component, targetEl) {
-    targetEl.appendChild(component.root)
+    let range = new Range()
+    range.setStart(targetEl, 0)
+    range.setEnd(targetEl, targetEl.childNodes.length)
+    range.deleteContents()
+    component._renderToDOM(range)
 }
