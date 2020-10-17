@@ -31,7 +31,12 @@ class ElementWrapper {
     }
 
     setAttribute(name, value) {
-        this.root.setAttribute(name, value)
+        if (name.match(/^on([\s\S]+)$/)) {
+            const eventName = RegExp.$1.replace(/^[\s\S]/, e => e.toLowerCase())
+            this.root.addEventListener(eventName, value)
+        } else {
+            this.root.setAttribute(name, value)
+        }
     }
 
     appendChild(component) {
@@ -67,6 +72,7 @@ export class Component {
         this.props = Object.create(null)
         this.children = []
         this._root = null
+        this._range = null
     }
 
     setAttribute(name, value) {
@@ -80,8 +86,14 @@ export class Component {
     // Switch from render one element to render a range of elements, prepare to re-render and re-paint in next step
     // Range API is best fit for range update
     _renderToDOM(range) {
+        this._range = range
         // render function returns component vnode
         this.render()._renderToDOM(range)
+    }
+
+    rerender() {
+        this._range.deleteContents()
+        this._renderToDOM(this._range)
     }
 
     // Enable access to DOM node

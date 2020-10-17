@@ -14,6 +14,7 @@ class MyComponent extends Component {
         let el = <div>
             <h1>My component</h1>
             <span>State a: { this.state.a.toString() }</span>
+            <button onclick={ () => { this.state.a++; this.rerender(); } }>Add</button>
             {this.children}
         </div>
         // Set attributes
@@ -39,5 +40,4 @@ class MyComponent extends Component {
 render(<MyComponent id="1" class="parent">
     <div id="2" class="child">Hello</div>
     <span>World</span>
-    <MyComponent id="child"/>
 </MyComponent>, document.body)
