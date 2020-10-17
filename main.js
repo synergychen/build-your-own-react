@@ -14,7 +14,7 @@ class MyComponent extends Component {
         let el = <div>
             <h1>My component</h1>
             <span>State a: { this.state.a.toString() }</span>
-            <button onclick={ () => { this.state.a++; this.rerender(); } }>Add</button>
+            <button onclick={ () => { this.setState({ a: this.state.a + 1 }) } }>Add</button>
             {this.children}
         </div>
         // Set attributes

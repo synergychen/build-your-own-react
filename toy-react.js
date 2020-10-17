@@ -83,6 +83,27 @@ export class Component {
         this.children.push(child)
     }
 
+    setState(newState) {
+        if (this.state === null || typeof this.state !== 'object') {
+            this.state = newState
+            this.rerender()
+            return
+        }
+
+        const merge = (oldState, newState) => {
+            for (let p in newState) {
+                if (oldState[p] === null || typeof oldState[p] !== 'object') {
+                    oldState[p] = newState[p]
+                } else {
+                    merge(oldState[p], newState[p])
+                }
+            }
+        }
+
+        merge(this.state, newState)
+        this.rerender()
+    }
+
     // Switch from render one element to render a range of elements, prepare to re-render and re-paint in next step
     // Range API is best fit for range update
     _renderToDOM(range) {
