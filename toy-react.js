@@ -24,47 +24,6 @@ export function createElement(type, attributes, ...children) {
     return el
 }
 
-// Element wrapper (adapter pattern)
-class ElementWrapper {
-    constructor(tagName) {
-        this.root = document.createElement(tagName)
-    }
-
-    setAttribute(name, value) {
-        if (name.match(/^on([\s\S]+)$/)) {
-            const eventName = RegExp.$1.replace(/^[\s\S]/, e => e.toLowerCase())
-            this.root.addEventListener(eventName, value)
-        } else {
-            this.root.setAttribute(name, value)
-        }
-    }
-
-    appendChild(component) {
-        const range = new Range()
-        // Append to end
-        range.setStart(this.root, this.root.childNodes.length)
-        range.setEnd(this.root, this.root.childNodes.length)
-        component._renderToDOM(range)
-    }
-
-    _renderToDOM(range) {
-        range.deleteContents()
-        range.insertNode(this.root)
-    }
-}
-
-// Text node wrapper
-class TextNodeWrapper {
-    constructor(text) {
-        this.root = document.createTextNode(text)
-    }
-
-    _renderToDOM(range) {
-        range.deleteContents()
-        range.insertNode(this.root)
-    }
-}
-
 export class Component {
     constructor() {
         // Create virtual node with attributes but without rendering
@@ -81,6 +40,11 @@ export class Component {
 
     appendChild(child) {
         this.children.push(child)
+    }
+
+    // Virtual dom is more efficient than using range api to refresh full DOM node / tree.
+    get vdom() {
+        return this.render().vdom
     }
 
     setState(newState) {
@@ -128,10 +92,71 @@ export class Component {
     }
 }
 
+// Element wrapper (adapter pattern)
+class ElementWrapper extends Component {
+    constructor(type) {
+        super()
+        this.type = type
+        this._root = document.createElement(type)
+    }
+
+    // setAttribute(name, value) {
+    //     if (name.match(/^on([\s\S]+)$/)) {
+    //         const eventName = RegExp.$1.replace(/^[\s\S]/, e => e.toLowerCase())
+    //         this._root.addEventListener(eventName, value)
+    //     } else {
+    //         this._root.setAttribute(name, value)
+    //     }
+    // }
+
+    // appendChild(component) {
+    //     const range = new Range()
+    //     // Append to end
+    //     range.setStart(this._root, this._root.childNodes.length)
+    //     range.setEnd(this._root, this._root.childNodes.length)
+    //     component._renderToDOM(range)
+    // }
+
+    get vdom() {
+        return {
+            type: this.type,
+            props: this.props,
+            children: this.children.map(child => child.vdom)
+        }
+    }
+
+    _renderToDOM(range) {
+        range.deleteContents()
+        range.insertNode(this._root)
+    }
+}
+
+// Text node wrapper
+class TextNodeWrapper extends Component {
+    constructor(content) {
+        super()
+        this.content = content
+        this._root = document.createTextNode(content)
+    }
+
+    _renderToDOM(range) {
+        range.deleteContents()
+        range.insertNode(this._root)
+    }
+
+    get vdom() {
+        return {
+            type: '#text',
+            content: this.content
+        }
+    }
+}
+
 export function render(component, targetEl) {
     let range = new Range()
     range.setStart(targetEl, 0)
     range.setEnd(targetEl, targetEl.childNodes.length)
     range.deleteContents()
+    console.log(component.vdom)
     component._renderToDOM(range)
 }
