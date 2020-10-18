@@ -1,0 +1,35 @@
+@startuml
+skinparam classAttributeIconSize 0
+
+class Component {
+  + props
+  + children
+  + vdom
+  + vchildren
+  - _range
+
+  + setAttribute()
+  + appendChild()
+  + setState()
+  + update()
+  - _renderToDOM()
+}
+
+class ElementWrapper {
+  + type
+}
+
+class TextWrapper {
+  + type
+  + content
+}
+
+class MyComponent {
+  + state
+  + render()
+}
+
+Component <|-- ElementWrapper
+Component <|-- TextWrapper
+Component <|-- MyComponent
+@enduml

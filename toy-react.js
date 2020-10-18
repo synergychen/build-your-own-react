@@ -17,7 +17,7 @@ export function createElement(type, attributes, ...children) {
                 continue
             }
             if (typeof child === 'string') {
-                child = new TextNodeWrapper(child)
+                child = new TextWrapper(child)
             }
             if (typeof child === 'object' && child instanceof Array) {
                 insertChildren(child)
@@ -197,7 +197,7 @@ class ElementWrapper extends Component {
 }
 
 // Text node wrapper
-class TextNodeWrapper extends Component {
+class TextWrapper extends Component {
     constructor(content) {
         super()
         this.type = '#text'
