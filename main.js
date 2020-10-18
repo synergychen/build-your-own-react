@@ -37,7 +37,6 @@ class MyComponent extends Component {
 //   }, "Hello"), createElement("span", null, "World"));
 //
 // Extract interface of ElementWrapper, TextNodeWrapper and Custom Component would require us to explicitly call render function in order to append to DOM.
-render(<MyComponent id="1" class="parent">
-    <div id="2" class="child">Hello</div>
-    <span>World</span>
+render(<MyComponent id="my-component" class="parent">
+    <div id="hello-world" class="child">Hello World</div>
 </MyComponent>, document.body)

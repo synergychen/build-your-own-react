@@ -1,15 +1,21 @@
 export function createElement(type, attributes, ...children) {
     let el
+    // Create instance
     if (typeof type === "string") {
         el = new ElementWrapper(type)
     } else {
         el = new type
     }
+    // Handle attributes
     for (let attrName in attributes) {
         el.setAttribute(attrName, attributes[attrName])
     }
+    // Handle children
     let insertChildren = (children) => {
         for (let child of children) {
+            if (child === null) {
+                continue
+            }
             if (typeof child === 'string') {
                 child = new TextNodeWrapper(child)
             }
@@ -46,14 +52,10 @@ export class Component {
         return this.render().vdom
     }
 
-    get vchildren() {
-        return this.children.map(child => child.vdom)
-    }
-
     setState(newState) {
         if (this.state === null || typeof this.state !== 'object') {
             this.state = newState
-            this.rerender()
+            this.update()
             return
         }
 
@@ -68,20 +70,81 @@ export class Component {
         }
 
         merge(this.state, newState)
-        this.rerender()
+        this.update()
     }
 
     // Switch from render one element to render a range of elements, prepare to re-render and re-paint in next step
     // Range API is best fit for range update
     _renderToDOM(range) {
         this._range = range
+        // Remember old vdom in order for "update" step to compare new and old vdom
+        this.oldVdom = this.vdom
         // render function returns component vnode
-        this.render()._renderToDOM(range)
+        this.oldVdom._renderToDOM(range)
     }
 
-    rerender() {
-        this._range.deleteContents()
-        this._renderToDOM(this._range)
+    // Core part: vdom diff
+    update() {
+        let isSameNode = (oldNode, newNode) => {
+            // For simplicity, return false if any is not the same:
+            // node type
+            if (oldNode.type !== newNode.type) {
+                return false
+            }
+            // prop
+            for (let name in newNode.props) {
+                if (newNode[name] !== oldNode[name]) {
+                    return false
+                }
+            }
+            // prop length
+            if (Object.keys(newNode.props).length !== Object.keys(oldNode.props).length) {
+                return false
+            }
+            // text content
+            if (newNode.type === '#text') {
+                if (newNode.content !== oldNode.content) {
+                    return false
+                }
+            }
+
+            return true
+        }
+
+        let update = (oldNode, newNode) => {
+            if (!isSameNode(oldNode, newNode)) {
+                newNode._renderToDOM(oldNode._range)
+                return
+            }
+
+            newNode._range = oldNode._range
+
+            let oldChildren = oldNode.vchildren
+            let newChildren = newNode.vchildren
+
+            if (!newChildren || !newChildren.length) {
+                return
+            }
+
+            let tailRange = oldChildren[oldChildren.length - 1]._range
+            for (let i = 0; i < newChildren.length; i++) {
+                let oldChild = oldChildren[i]
+                let newChild = newChildren[i]
+                if (i < oldChildren.length) {
+                    update(oldChild, newChild)
+                } else {
+                    let range = new Range()
+                    range.setStart(tailRange.endContainer, tailRange.endOffset)
+                    range.setStart(tailRange.endContainer, tailRange.endOffset)
+                    newChild._renderToDOM(range)
+                }
+            }
+        }
+
+        let oldVdom = this.oldVdom
+        let newVdom = this.vdom
+        update(oldVdom, newVdom)
+        this.oldVdom = newVdom
     }
 }
 
@@ -93,10 +156,13 @@ class ElementWrapper extends Component {
     }
 
     get vdom() {
+        // Make sure every time when get a vdom, vchildren is always available
+        this.vchildren = this.children.map(child => child.vdom)
         return this
     }
 
     _renderToDOM(range) {
+        this._range = range
         range.deleteContents()
 
         let root = document.createElement(this.type)
@@ -112,8 +178,13 @@ class ElementWrapper extends Component {
             }
         }
 
+        // Double check to make sure vchildren is available
+        if (!this.vchildren) {
+            this.vchildren = this.children.map(child => child.vdom)
+        }
+
         // Render children
-        for (let child of this.children) {
+        for (let child of this.vchildren) {
             const childRange = new Range()
             // Append to end
             childRange.setStart(root, root.childNodes.length)
@@ -121,7 +192,7 @@ class ElementWrapper extends Component {
             child._renderToDOM(childRange)
         }
 
-        range.insertNode(root)
+        replaceContent(range, root)
     }
 }
 
@@ -131,17 +202,27 @@ class TextNodeWrapper extends Component {
         super()
         this.type = '#text'
         this.content = content
-        this.root = document.createTextNode(content)
     }
 
     _renderToDOM(range) {
-        range.deleteContents()
-        range.insertNode(this.root)
+        this._range = range
+        let root = document.createTextNode(this.content)
+        replaceContent(range, root)
     }
 
     get vdom() {
+        // Make sure every time when get a vdom, vchildren is always available
+        this.vchildren = this.children.map(child => child.vdom)
         return this
     }
+}
+
+function replaceContent(range, node) {
+    range.insertNode(node)
+    range.setStartAfter(node)
+    range.deleteContents()
+    range.setStartBefore(node)
+    range.setEndAfter(node)
 }
 
 export function render(component, targetEl) {
@@ -149,6 +230,6 @@ export function render(component, targetEl) {
     range.setStart(targetEl, 0)
     range.setEnd(targetEl, targetEl.childNodes.length)
     range.deleteContents()
-    console.log(component.vdom)
     component._renderToDOM(range)
+    console.log(component)
 }
