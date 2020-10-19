@@ -1,4 +1,4 @@
-# Rebuild Wheel: React
+# Build Your Own: React
 
 Simple implementation of React, includes:
 
